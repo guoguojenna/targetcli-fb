@@ -51,6 +51,13 @@ dependencies = [
     "pre-commit",
 ]
 
+[tool.hatch.envs.test]
+dependencies = [
+    "pytest",
+    "pytest-cov",
+    "pytest-mock",
+]
+
 [tool.ruff]
 line-length = 120
 
@@ -104,3 +111,30 @@ inline-quotes = "single"
 [tool.ruff.lint.per-file-ignores]
 # Preserving long lines for readability
 "src/targetcli/ui_target.py" = ["E501"]
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra -q --cov=targetcli --cov-report=term-missing"
+testpaths = [
+    "tests",
+]
+markers = [
+    "integration: marks tests as integration tests",
+    "ui: marks tests as UI tests",
+    "command: marks tests as command tests",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["targetcli"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "pass",
+    "raise ImportError",
+]
