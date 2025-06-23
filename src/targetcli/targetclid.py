@@ -153,28 +153,30 @@ class TargetCLI:
                 connection.close()
                 still_listen = False
             else:
-                self.con._stdout = self.con._stderr = f = tempfile.NamedTemporaryFile(mode='w', delete=False)
-                try:
-                    # extract multiple commands delimited with '%'
-                    list_data = data.decode().split('%')
-                    for cmd in list_data:
-                        self.shell.run_cmdline(cmd)
-                except Exception as e:
-                    print(str(e), file=f)  # push error to stream
+                temp_filename = None
+                with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
+                    temp_filename = f.name
+                    self.con._stdout = self.con._stderr = f
+                    try:
+                        # extract multiple commands delimited with '%'
+                        list_data = data.decode().split('%')
+                        for cmd in list_data:
+                            self.shell.run_cmdline(cmd)
+                    except Exception as e:
+                        print(str(e), file=f)  # push error to stream
 
                 # Restore
                 self.con._stdout = self.con_stdout_
                 self.con._stderr = self.con_stderr_
-                f.close()
 
-                with open(f.name) as f:
+                with open(temp_filename) as f:
                     output = f.read()
                     var = struct.pack('i', len(output))
                     connection.sendall(var)  # length of string
                     if len(output):
                         connection.sendall(output.encode())  # actual string
 
-                Path(f.name).unlink()
+                Path(temp_filename).unlink()
 
 
 def usage():
