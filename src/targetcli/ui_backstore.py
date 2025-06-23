@@ -103,7 +103,7 @@ def bytes_to_human(size):
 
     # don't use decimal for bytes
     if size < kilo:
-        return "%d bytes" % size
+        return f"{int(size)} bytes"
     size /= kilo
 
     for x in ('KiB', 'MiB', 'GiB', 'TiB', 'PiB'):
@@ -425,7 +425,7 @@ class UIFileIOBackstore(UIBackstore):
             if sparse:
                 os.ftruncate(f.fileno(), size)
             else:
-                self.shell.log.info("Writing %d bytes" % size)
+                self.shell.log.info(f"Writing {size} bytes")
                 try:
                     # Prior to version 3.3, Python does not provide fallocate
                     os.posix_fallocate(f.fileno(), 0, size)
@@ -436,9 +436,9 @@ class UIFileIOBackstore(UIBackstore):
                         size -= write_size
         except OSError:
             Path(filename).unlink()
-            raise ExecutionError("Could not expand file to %d bytes" % size)
+            raise ExecutionError(f"Could not expand file to {size} bytes")
         except OverflowError:
-            raise ExecutionError("The file size is too large (%d bytes)" % size)
+            raise ExecutionError(f"The file size is too large ({size} bytes)")
         finally:
             f.close()
 
@@ -545,9 +545,7 @@ class UIBlockBackstore(UIBackstore):
             return False
 
         os.close(f)
-        if struct.unpack('I', buf)[0] == 0:
-            return False
-        return True
+        return struct.unpack('I', buf)[0] != 0
 
     def ui_command_create(self, name, dev, readonly=None, wwn=None):
         '''
@@ -641,8 +639,7 @@ class UIUserBackedBackstore(UIBackstore):
             raise ExecutionError("UserBackedStorageObject creation failed.")
 
         ui_so = UIUserBackedStorageObject(so, self)
-        self.shell.log.info("Created user-backed storage object %s size %d."
-                            % (name, size))
+        self.shell.log.info(f"Created user-backed storage object {name} size {size} bytes.")
         return self.new_node(ui_so)
 
     def ui_command_changemedium(self, name, size, cfgstring):

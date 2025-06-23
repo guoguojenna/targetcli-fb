@@ -163,7 +163,7 @@ class TargetCLI:
                         for cmd in list_data:
                             self.shell.run_cmdline(cmd)
                     except Exception as e:
-                        print(str(e), file=f)  # push error to stream
+                        print(e, file=f)
 
                 # Restore
                 self.con._stdout = self.con_stdout_
