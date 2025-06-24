@@ -155,8 +155,7 @@ class UIRoot(UINode):
                     prefs = Path(universal_prefs_file).read_text()
                     backups = [line for line in prefs.splitlines() if re.match(
                         r'^max_backup_files\s*=', line)]
-                    if max_backup_files < int(backups[0].split('=')[1].strip()):
-                        max_backup_files = int(backups[0].split('=')[1].strip())
+                    max_backup_files = max(max_backup_files, int(backups[0].split('=')[1].strip()))
                 except:
                     self.shell.log.debug(f"No universal prefs file '{universal_prefs_file}'.")
 
@@ -165,8 +164,7 @@ class UIRoot(UINode):
                     with ignored(IOError):
                         Path(f).unlink()
 
-                self.shell.log.info("Last %d configs saved in %s."
-                                    % (max_backup_files, backup_dir))
+                self.shell.log.info(f"Last {max_backup_files} configs saved in {backup_dir}.")
             else:
                 self.shell.log.warning(f"Could not create backup file {backupfile}: {backup_error}.")
 
@@ -210,8 +208,10 @@ class UIRoot(UINode):
         self.refresh()
 
         if errors:
-            raise ExecutionError("Configuration restored, %d recoverable errors:\n%s" % \
-                                     (len(errors), "\n".join(errors)))
+            error_messages = "\n".join(errors)
+            raise ExecutionError(
+                f"Configuration restored, {len(errors)} recoverable errors:\n{error_messages}",
+            )
 
         self.shell.log.info(f"Configuration restored from {savefile}")
 
@@ -290,8 +290,11 @@ class UIRoot(UINode):
 
         def print_session(session):
             acl = session['parent_nodeacl']
-            indent_print("alias: %(alias)s\tsid: %(id)i type: %(type)s session-state: %(state)s" % session,
-                         base_steps)
+            indent_print(
+                f"alias: {session['alias']}\tsid: {session['id']} "
+                f"type: {session['type']} session-state: {session['state']}",
+                base_steps,
+            )
 
             if action == 'detail':
                 if self.as_root:
@@ -306,13 +309,15 @@ class UIRoot(UINode):
                     plugin = mlun.tpg_lun.storage_object.plugin
                     name = mlun.tpg_lun.storage_object.name
                     mode = "r" if mlun.write_protect else "rw"
-                    indent_print("mapped-lun: %d backstore: %s/%s mode: %s" %
-                                 (mlun.mapped_lun, plugin, name, mode),
+                    indent_print(f"mapped-lun: {mlun.mapped_lun} backstore: {plugin}/{name} mode: {mode}",
                                  base_steps + 1)
 
                 for connection in session['connections']:
-                    indent_print("address: %(address)s (%(transport)s)  cid: %(cid)i connection-state: %(cstate)s"
-                                 % connection, base_steps + 1)
+                    indent_print(
+                        f"address: {connection['address']} ({connection['transport']}) "
+                        f"cid: {connection['cid']} connection-state: {connection['cstate']}",
+                        base_steps + 1,
+                    )
 
         if sid:
             printed_sessions = [x for x in self.rtsroot.sessions if x['id'] == int(sid)]
@@ -325,4 +330,4 @@ class UIRoot(UINode):
         elif sid is None:
             indent_print("(no open sessions)", base_steps)
         else:
-            raise ExecutionError("no session found with sid %i" % int(sid))
+            raise ExecutionError(f"no session found with sid {sid}")

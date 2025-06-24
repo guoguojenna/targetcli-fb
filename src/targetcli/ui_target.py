@@ -441,7 +441,7 @@ class UITPG(UIRTSLibNode):
     A generic TPG UI.
     '''
     def __init__(self, tpg, parent):
-        name = "tpg%d" % tpg.tag
+        name = f"tpg{tpg.tag}"
         super().__init__(name, tpg, parent)
         self.refresh()
 
@@ -607,7 +607,7 @@ class UINodeACLs(UINode):
         if add_mapped_luns:
             for lun in self.tpg.luns:
                 MappedLUN(node_acl, lun.lun, lun.lun, write_protect=False)
-                self.shell.log.info("Created mapped LUN %d." % lun.lun)
+                self.shell.log.info(f"Created mapped LUN {lun.lun}.")
             self.refresh()
 
         return self.new_node(ui_node_acl)
@@ -915,7 +915,7 @@ class UINodeACL(UIRTSLibNode):
 
         if tpg_lun in (ml.tpg_lun.lun for ml in self.rtsnodes[0].mapped_luns):
             self.shell.log.warning(
-                "Warning: TPG LUN %d already mapped to this NodeACL" % tpg_lun)
+                f"Warning: TPG LUN {tpg_lun} already mapped to this NodeACL")
 
         for na in self.rtsnodes:
             mlun = MappedLUN(na, mapped_lun, tpg_lun, write_protect)
@@ -1032,7 +1032,7 @@ class UIMappedLUN(UIRTSLibNode):
     A generic UI for MappedLUN objects.
     '''
     def __init__(self, mapped_lun, parent):
-        name = "mapped_lun%d" % mapped_lun.mapped_lun
+        name = f"mapped_lun{mapped_lun.mapped_lun}"
         super().__init__(name, mapped_lun, parent)
         self.refresh()
 
@@ -1046,9 +1046,7 @@ class UIMappedLUN(UIRTSLibNode):
             is_healthy = False
         else:
             access_mode = 'ro' if mapped_lun.write_protect else 'rw'
-            description = "lun%d %s/%s (%s)" \
-            % (tpg_lun.lun, tpg_lun.storage_object.plugin,
-               tpg_lun.storage_object.name, access_mode)
+            description = f"lun{tpg_lun.lun} {tpg_lun.storage_object.plugin}/{tpg_lun.storage_object.name} ({access_mode})"
 
         return (description, is_healthy)
 
@@ -1130,8 +1128,10 @@ class UILUNs(UINode):
                     mapped_lun = possible_mlun
 
                 mlun = MappedLUN(acl, mapped_lun, lun_object, write_protect=False)
-                self.shell.log.info("Created LUN %d->%d mapping in node ACL %s"
-                                    % (mlun.tpg_lun.lun, mlun.mapped_lun, acl.node_wwn))
+                self.shell.log.info(
+                    f"Created LUN {mlun.tpg_lun.lun}->{mlun.mapped_lun} mapping in node ACL "
+                    f"{acl.node_wwn}",
+                )
             self.parent.refresh()
 
         return self.new_node(ui_lun)
@@ -1214,7 +1214,7 @@ class UILUN(UIRTSLibNode):
     A generic UI for LUN objects.
     '''
     def __init__(self, lun, parent):
-        name = "lun%d" % lun.lun
+        name = f"lun{lun.lun}"
         super().__init__(name, lun, parent)
         self.refresh()
 
@@ -1302,14 +1302,13 @@ class UIPortals(UINode):
         ip_address = self.ui_eval_param(ip_address, 'string', default_portal_listen)
 
         if ip_port == default_port:
-            self.shell.log.info("Using default IP port %d" % ip_port)
+            self.shell.log.info(f"Using default IP port {ip_port}")
         if ip_address == default_portal_listen:
             self.shell.log.info(f"Binding to INADDR_ANY ({default_portal_listen})")
 
         portal = NetworkPortal(self.tpg, self._canonicalize_ip(ip_address),
                                ip_port, mode='create')
-        self.shell.log.info("Created network portal %s:%d."
-                            % (ip_address, ip_port))
+        self.shell.log.info(f"Created network portal {ip_address}:{ip_port}.")
         ui_portal = UIPortal(portal, self)
         return self.new_node(ui_portal)
 
